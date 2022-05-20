@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include "comms.h"
 
 #define SENS 500
 #define DISC (SENS/10000.0)
@@ -35,8 +36,6 @@ vec3 dest_pos(){
 
 void setup() {
   Serial.begin(9600);
-  servoX.write(90);
-  servoX.write(90);
   servoX.attach(7);
   servoY.attach(8);
   delay(5000);
