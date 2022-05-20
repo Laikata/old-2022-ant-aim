@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include "comms.h"
 
 #define SENS 25
 #define DISC (SENS/10000.0)
@@ -14,6 +15,7 @@ bool manual = true;
 bool btnPressedLast = true;
 
 void setup() {
+  Serial.begin(9600);
   servoX.attach(7);
   servoY.attach(8);
   delay(3000);
