@@ -6,6 +6,7 @@
 #define SENS 500
 #define DISC (SENS/10000.0)
 #define DEFAULT_COORDS {0.0, 0.0, 0.0}
+#define DEFAULT_BASE_COORDS {38.83450, 0.10326, 3.0}
 
 SoftwareSerial ss(2,3);
 Servo servoX;
@@ -39,7 +40,7 @@ void setup() {
 
 void loop() {
   // Auto-aim
-  vec3 base = base_pos();
+  const static vec3 base = DEFAULT_BASE_COORDS;
   static vec3 dest = DEFAULT_COORDS;
   comms_recv(&dest);
   yaw = atan((dest.y-base.y)/(dest.x-base.x))*180/PI;
