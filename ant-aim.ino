@@ -1,11 +1,13 @@
 #include <Servo.h>
 #include "comms.h"
 #include "vector.h"
+#include <SoftwareSerial.h>
 
 #define SENS 500
 #define DISC (SENS/10000.0)
 #define DEFAULT_COORDS {0.0, 0.0, 0.0}
 
+SoftwareSerial ss(2,3);
 Servo servoX;
 Servo servoY;
 
@@ -19,14 +21,6 @@ vec3 base_pos(){
   vec.x = 0;
   vec.y = 0;
   vec.z = 0;
-  return vec;
-}
-
-vec3 dest_pos(){
-  vec3 vec;
-  vec.x = 0;
-  vec.y = 0;
-  vec.z = 1;
   return vec;
 }
 
@@ -62,16 +56,8 @@ void loop() {
   // Write constrained values to servos 
   yaw = constrain(yaw, 0, 180);
   pitch = constrain(pitch, 0, 180);
-  realYaw += (yaw-realYaw) / 100;
-  realPitch += (pitch-realPitch) / 100;
+  realYaw += (yaw-realYaw) / 1000;
+  realPitch += (pitch-realPitch) / 1000;
   servoX.write(realYaw);
   servoY.write(realPitch);
-  Serial.print(yaw);
-  Serial.print(", ");
-  Serial.print(pitch);
-  Serial.print(", ");
-  Serial.print(realYaw);
-  Serial.print(", ");
-  Serial.print(realPitch);
-  Serial.print("\n");
 }

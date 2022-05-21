@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 #include "vector.h"
 #include <inttypes.h>
 #include <string.h>
@@ -71,8 +72,4 @@ static const uint32_t crc_table[256] = {
   0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-<<<<<<< HEAD
 bool comms_recv(vec3 *pos);
-=======
-bool comms_recv(vec3_t *pos);
->>>>>>> a4c42a34f5803db71c6b20da4eb92972551e2760

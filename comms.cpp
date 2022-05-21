@@ -22,9 +22,11 @@ void rev_float(float *value) {
     f32_u32.i = __builtin_bswap32(f32_u32.i);
 }
 
+extern SoftwareSerial ss;
+
 // Reads from Serial while echoing
 size_t echo(uint8_t *buffer, int length) {
-  size_t result = Serial.readBytes(buffer, length);
+  size_t result = ss.readBytes(buffer, length);
   Serial.write(buffer, result);
   return result;
 }
@@ -32,7 +34,7 @@ size_t echo(uint8_t *buffer, int length) {
 // Returns true if there's a new packet
 bool comms_recv(vec3 *pos) {
     uint8_t packet[20];
-    if(Serial.available()){
+    if(ss.available()){
         echo(packet, 1);
         if(packet[0] == 0x16) {
             const uint8_t data_size = 13;
