@@ -1,7 +1,7 @@
 #pragma once
 
-typedef struct VEC3_STRUCT {
+typedef struct {
     float x;
     float y;
     float z;
-} vec3_t;
+} vec3;

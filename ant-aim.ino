@@ -1,14 +1,10 @@
 #include <Servo.h>
 #include "comms.h"
+#include "vector.h"
 
 #define SENS 500
 #define DISC (SENS/10000.0)
-
-typedef struct {
-  float x;
-  float y;
-  float z;
-} vec3;
+#define DEFAULT_COORDS {0.0, 0.0, 0.0}
 
 Servo servoX;
 Servo servoY;
@@ -50,7 +46,8 @@ void setup() {
 void loop() {
   // Auto-aim
   vec3 base = base_pos();
-  vec3 dest = dest_pos();
+  static vec3 dest = DEFAULT_COORDS;
+  comms_recv(&dest);
   yaw = atan((dest.y-base.y)/(dest.x-base.x))*180/PI;
   pitch = atan((dest.z-base.z)/sqrt(dest.x*dest.x+dest.y*dest.y))*180/PI;
 

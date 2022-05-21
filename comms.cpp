@@ -23,7 +23,7 @@ void rev_float(float *value) {
 }
 
 //Returns true if there's a new packet
-bool commms_recv(vec3_t *pos) {
+bool comms_recv(vec3 *pos) {
     uint8_t packet[20];
     if(Serial.available()){
         Serial.readBytes(packet, 1);
