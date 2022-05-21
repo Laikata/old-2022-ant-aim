@@ -27,6 +27,7 @@ vec3 base_pos(){
 
 void setup() {
   Serial.begin(9600);
+  ss.begin(9600);
   servoX.attach(7);
   servoY.attach(8);
   delay(5000);
