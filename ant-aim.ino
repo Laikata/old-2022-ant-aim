@@ -27,9 +27,10 @@ void loop() {
   const static vec3 base = DEFAULT_BASE_COORDS;
   static vec3 dest = DEFAULT_COORDS;
   comms_recv(&dest);
-  yaw = atan((dest.y-base.y)/(dest.x-base.x))*180/PI;
-  pitch = atan((dest.z-base.z)/sqrt(dest.x*dest.x+dest.y*dest.y))*180/PI;
 
+  yaw = atan2(dest.y - base.y, dest.x - base.x) * 180/PI;
+  forward = sqrt(pow(dest.x - base.x, 2) + pow(dest.y - base.y, 2)); // Distance to cansat from a topdown view
+  pitch = atan2(dest.z - base.z, forward) * 180/PI;
 
   // Write constrained values to servos 
   yaw = constrain(yaw, 0, 180);
