@@ -3,8 +3,7 @@
 #include "vector.h"
 #include <SoftwareSerial.h>
 
-#define SENS 500
-#define DISC (SENS/10000.0)
+#define SPEED 5
 #define DEFAULT_COORDS {0.0, 0.0, 0.0}
 #define DEFAULT_BASE_COORDS {38.839414772331494, 0.0954006784762083, 3.0}
 
@@ -32,11 +31,26 @@ void loop() {
   forward = sqrt(pow(dest.x - base.x, 2) + pow(dest.y - base.y, 2)); // Distance to cansat from a topdown view
   pitch = atan2(dest.z - base.z, forward) * 180/PI;
 
-  // Write constrained values to servos 
+  // Constrain angles
   yaw = constrain(yaw, 0, 180);
   pitch = constrain(pitch, 0, 180);
-  realYaw += (yaw-realYaw) / 1000;
-  realPitch += (pitch-realPitch) / 1000;
-  servoX.write(realYaw);
-  servoY.write(realPitch);
+
+  // Limit speed
+  int lastYaw = servoX.read();
+  if(lastYaw - yaw > 0 && lastYaw - yaw > SPEED) {
+    yaw = SPEED;
+  } else if(lastYaw - yaw < -SPEED) {
+    yaw = -SPEED;
+  }
+
+  int lastPitch = servoY.read();
+  if(lastPitch - pitch > 0 && lastPitch - pitch > SPEED) {
+    pitch = SPEED;
+  } else if(lastPitch - pitch < -SPEED) {
+    pitch = -SPEED;
+  }
+
+  // Write to servos
+  servoX.write(yaw);
+  servoY.write(pitch);
 }
