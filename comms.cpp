@@ -13,6 +13,27 @@ static uint32_t crc32(const uint8_t data[], size_t data_length) {
 	return crc32;
 }
 
+float ReverseFloat(float value) {
+    union {
+    float f;
+    uint32_t i;
+  } f32_u8 = {.f = value};
+
+    f32_u8.i = __builtin_bswap32(f32_u8.i);
+
+  return f32_u8.f;
+}
+
+inline float BigEndianFloat(float value) {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  return ReverseFloat(value);
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+  return value;
+#else
+# error Unsupported endianness
+#endif
+}
+
 void rev_float(float *value) {
     union {
         float f;
@@ -39,10 +60,10 @@ bool comms_recv(vec3 *pos) {
         if(packet[0] == 0x16) {
             const uint8_t data_size = 13;
             echo(packet + 1, 3);
-
             if(packet[1] != data_size || packet[3] != 0x01) 
                 return false;
 
+            //Serial.println("New GPS Packet");
             echo(packet + 4, 12);
             
             // We have to read the checksum before writing to pos
@@ -54,19 +75,19 @@ bool comms_recv(vec3 *pos) {
                     packet[19];
 
             if(crc32(packet + 3, 13) == checksum) {
-              memcpy(pos, packet + 4, 4);
-              memcpy(pos, packet + 8, 4);
-              memcpy(pos, packet + 12, 4);
-  
-              #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-                  rev_float(&pos->x);
-                  rev_float(&pos->y);
-                  rev_float(&pos->z);
-              #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-  
-              #else
-              #error Unsupported endianness
-              #endif
+              float longitude, latitude, altitude;
+
+              memcpy(&longitude, &packet[4], 4);
+              memcpy(&latitude, &packet[8], 4);
+              memcpy(&altitude, &packet[12], 4);
+              
+              float bige_lon = BigEndianFloat(longitude);
+              float bige_lat = BigEndianFloat(latitude);
+              float bige_alt = BigEndianFloat(altitude);
+              
+              memcpy(&pos->x, &bige_lon, 4);
+              memcpy(&pos->y, &bige_lat, 4);
+              memcpy(&pos->z, &bige_alt, 4);
               
               return true;
             }

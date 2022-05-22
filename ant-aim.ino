@@ -6,7 +6,7 @@
 #define SENS 500
 #define DISC (SENS/10000.0)
 #define DEFAULT_COORDS {0.0, 0.0, 0.0}
-#define DEFAULT_BASE_COORDS {38.83450, 0.10326, 3.0}
+#define DEFAULT_BASE_COORDS {38.839414772331494, 0.0954006784762083, 3.0}
 
 SoftwareSerial ss(2,3);
 Servo servoX;
@@ -30,6 +30,8 @@ void setup() {
   ss.begin(9600);
   servoX.attach(7);
   servoY.attach(8);
+  servoX.write(90);
+  servoY.write(90);
   delay(5000);
   for(int i = 0; i < 100; i++){
     servoX.write(((90*(100-i))+(yaw*i))/100);
