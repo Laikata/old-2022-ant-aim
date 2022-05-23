@@ -80,14 +80,15 @@ bool comms_recv(vec3 *pos) {
               memcpy(&longitude, &packet[4], 4);
               memcpy(&latitude, &packet[8], 4);
               memcpy(&altitude, &packet[12], 4);
-              
-              float bige_lon = BigEndianFloat(longitude);
-              float bige_lat = BigEndianFloat(latitude);
+
+              // Convert to radians
+              float bige_lon = BigEndianFloat(longitude) * PI/180;
+              float bige_lat = BigEndianFloat(latitude) * PI/180;
               float bige_alt = BigEndianFloat(altitude);
               
-              memcpy(&pos->x, &bige_lon, 4);
-              memcpy(&pos->y, &bige_lat, 4);
-              memcpy(&pos->z, &bige_alt, 4);
+              pos->x = bige_lon;
+              pos->y = bige_lat;
+              pos->z = bige_alt;
               
               return true;
             }
