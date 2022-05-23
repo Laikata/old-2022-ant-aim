@@ -59,7 +59,8 @@ bool comms_recv(vec3 *pos) {
         echo(packet, 1);
         if(packet[0] == 0x16) {
             const uint8_t data_size = 13;
-            echo(packet + 1, 3);
+            size_t recvd = echo(packet + 1, 3);
+            if(recvd < 1) return false;
             if(packet[1] != data_size || packet[3] != 0x01) 
                 return false;
 

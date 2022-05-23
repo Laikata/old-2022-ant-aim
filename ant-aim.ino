@@ -5,9 +5,10 @@
 
 #define SPEED 1
 #define MOVE_RATE 50 //ms
+#define RECV_RATE 20 //ms
 // Coordinates must be in radians for formulas to work
-#define DEFAULT_COORDS {0.0 * PI/180, 38.0 * PI/180, 3.0}
-#define DEFAULT_BASE_COORDS {0.0 * PI/180, 40.0 * PI/180, 3.0}
+#define DEFAULT_COORDS {0.0 * PI/180, 0.0 * PI/180, 100.0}
+#define DEFAULT_BASE_COORDS {2.0 * PI/180, 2.0 * PI/180, 3.0}
 
 SoftwareSerial ss(2,3);
 Servo servoX;
@@ -35,7 +36,6 @@ void moveSlowly(Servo *servo, int angle) {
 
 void setup() {
   Serial.begin(9600);
-  ss.begin(9600);
   delay(1000);
   servoX.attach(7);
   loopSlowly(&servoX, 90);
@@ -43,13 +43,16 @@ void setup() {
   servoY.attach(8);
   loopSlowly(&servoY, 15);
   delay(2000);
+  ss.begin(9600);
+  //ss.setTimeout(10);
 }
 
 void loop() {
   // Auto-aim
   const static vec3 base = DEFAULT_BASE_COORDS;
   static vec3 dest = DEFAULT_COORDS;
-  //comms_recv(&dest);
+
+  //comms_recv(&dest);  
 
   static unsigned long nextMove = millis();
   
@@ -64,8 +67,9 @@ void loop() {
       // We move servoX
       float yaw = atan2(dlon, dlat) * 180/PI;
       inverted = false;
+      Serial.println(yaw);
       if(yaw < 0){
-        yaw = 180 + yaw;
+        yaw *= -1 /*180 + yaw*/;
         inverted = true;
       }
       
