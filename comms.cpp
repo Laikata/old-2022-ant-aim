@@ -19,7 +19,7 @@ float ReverseFloat(float value) {
     uint32_t i;
   } f32_u8 = {.f = value};
 
-    f32_u8.i = __builtin_bswap32(f32_u8.i);
+  f32_u8.i = __builtin_bswap32(f32_u8.i);
 
   return f32_u8.f;
 }
@@ -61,37 +61,38 @@ bool comms_recv(vec3 *pos) {
             const uint8_t data_size = 13;
             size_t recvd = echo(packet + 1, 3);
             if(recvd < 1) return false;
-            if(packet[1] != data_size || packet[3] != 0x01) 
-                return false;
+            if(packet[1] == data_size){ 
+              if(packet[3] != 0x01 || packet[3] != 0x03) return false;
 
-            //Serial.println("New GPS Packet");
-            echo(packet + 4, 12);
-            
-            // We have to read the checksum before writing to pos
-            echo(packet + 16, 4);
-            uint32_t checksum = 
-                    ( ((uint32_t) packet[16]) << 24) +
-                    ( ((uint32_t) packet[17]) << 16) +
-                    (packet[18] << 8) +
-                    packet[19];
-
-            if(crc32(packet + 3, 13) == checksum) {
-              float longitude, latitude, altitude;
-
-              memcpy(&longitude, &packet[4], 4);
-              memcpy(&latitude, &packet[8], 4);
-              memcpy(&altitude, &packet[12], 4);
-
-              // Convert to radians
-              float bige_lon = BigEndianFloat(longitude) * PI/180;
-              float bige_lat = BigEndianFloat(latitude) * PI/180;
-              float bige_alt = BigEndianFloat(altitude);
+              //Serial.println("New GPS Packet");
+              echo(packet + 4, 12);
               
-              pos->x = bige_lon;
-              pos->y = bige_lat;
-              pos->z = bige_alt;
-              
-              return true;
+              // We have to read the checksum before writing to pos
+              echo(packet + 16, 4);
+              uint32_t checksum = 
+                      ( ((uint32_t) packet[16]) << 24) +
+                      ( ((uint32_t) packet[17]) << 16) +
+                      (packet[18] << 8) +
+                      packet[19];
+
+              if(crc32(packet + 3, 13) == checksum) {
+                float longitude, latitude, altitude;
+
+                memcpy(&longitude, &packet[4], 4);
+                memcpy(&latitude, &packet[8], 4);
+                //memcpy(&altitude, &packet[12], 4);
+
+                // Convert to radians
+                float bige_lon = BigEndianFloat(longitude) * PI/180;
+                float bige_lat = BigEndianFloat(latitude) * PI/180;
+                float bige_alt = BigEndianFloat(altitude);
+                
+                pos->x = bige_lon;
+                pos->y = bige_lat;
+                //pos->z = bige_alt;
+                
+                return true;
+              }
             }
         }
     }
