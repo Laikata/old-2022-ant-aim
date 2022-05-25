@@ -1,4 +1,6 @@
 #include <Servo.h>
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
 #include "comms.h"
 #include "vector.h"
 #include <SoftwareSerial.h>
@@ -7,19 +9,32 @@
 #define MOVE_RATE 50 //ms
 #define RECV_RATE 20 //ms
 // Coordinates must be in radians for formulas to work
-#define DEFAULT_COORDS {0.0 * PI/180, 0.0 * PI/180, 100.0}
-#define DEFAULT_BASE_COORDS {2.0 * PI/180, 2.0 * PI/180, 3.0}
+#define DEFAULT_COORDS {37.174242 * PI/180, -3.600380 * PI/180, 3.0}
+#define DEFAULT_BASE_COORDS {37.165646 * PI/180, -3.597890 * PI/180, 3.0}
+
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+#define SERVOMIN  100 // This is the 'minimum' pulse length count (out of 4096)
+#define SERVOMAX  460 // This is the 'maximum' pulse length count (out of 4096)
+#define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
 SoftwareSerial ss(2,3);
-Servo servoX;
-Servo servoY;
 
-void loopSlowly(Servo *servo, int angle) {
+int lastAngle[] = {90, 90};
+
+void moveServo(int servo, int angle){
+  if(angle > lastAngle[servo]) lastAngle[servo]++;
+  else if(angle < lastAngle[servo]) lastAngle[servo]--;
+  angle = map(lastAngle[servo], 0, 180, SERVOMIN, SERVOMAX);
+  pwm.setPWM(servo, 0, angle);
+}
+
+void loopSlowly(int servo, int angle) {
   while(true){
     static unsigned long nextMove = millis();
     if(nextMove <= millis()){
-      moveSlowly(servo, angle);
-      if(servo->read() == angle) {
+      moveServo(servo, angle);
+      if(lastAngle[servo] == angle) {
         break;
       }
       nextMove = millis() + MOVE_RATE;
@@ -27,24 +42,20 @@ void loopSlowly(Servo *servo, int angle) {
   }
 }
 
-void moveSlowly(Servo *servo, int angle) {
-  int lastAngle = servo->read();
-  if(angle > lastAngle) lastAngle++;
-  else if(angle < lastAngle) lastAngle--;
-  servo->write(lastAngle);
-}
-
 void setup() {
   Serial.begin(9600);
-  delay(1000);
-  servoX.attach(7);
-  loopSlowly(&servoX, 90);
-  delay(2000);
-  servoY.attach(8);
-  loopSlowly(&servoY, 15);
-  delay(2000);
   ss.begin(9600);
-  //ss.setTimeout(10);
+  ss.setTimeout(500);
+  pwm.begin();
+
+  pwm.setOscillatorFrequency(27000000);
+  pwm.setPWMFreq(SERVO_FREQ);
+  delay(10);
+  
+  moveServo(0, 90);
+  delay(10);
+  moveServo(1, 90);
+  delay(2000);
 }
 
 void loop() {
@@ -52,7 +63,8 @@ void loop() {
   const static vec3 base = DEFAULT_BASE_COORDS;
   static vec3 dest = DEFAULT_COORDS;
 
-  //comms_recv(&dest);  
+  comms_recv(&dest);
+  
 
   static unsigned long nextMove = millis();
   
@@ -67,16 +79,14 @@ void loop() {
       // We move servoX
       float yaw = atan2(dlon, dlat) * 180/PI;
       inverted = false;
-      Serial.println(yaw);
       if(yaw < 0){
         yaw *= -1 /*180 + yaw*/;
         inverted = true;
       }
       
-      Serial.println(yaw);
       //yaw = map(yaw, -180, 180, 0, 180);
   
-      moveSlowly(&servoX, yaw);
+      moveServo(0, yaw);
       whichServo = true;
     }
     else {
@@ -89,14 +99,14 @@ void loop() {
       float R = 6371; 
         
       // Calculate the result 
-      forward = forward * R;
+      forward = forward * R * 1000;
       float pitch = atan2(dhei, forward) * 180/PI;
 
       if(inverted){
         pitch = 180 - pitch;
       }
   
-      moveSlowly(&servoY, pitch);
+      moveServo(1, pitch);
       whichServo = false;
     }
     nextMove = millis() + MOVE_RATE;

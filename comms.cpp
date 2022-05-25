@@ -56,19 +56,17 @@ size_t echo(uint8_t *buffer, int length) {
 bool comms_recv(vec3 *pos) {
     uint8_t packet[20];
     if(ss.available()){
-        echo(packet, 1);
+        if(echo(packet, 1) < 1) return false;
         if(packet[0] == 0x16) {
             const uint8_t data_size = 13;
-            size_t recvd = echo(packet + 1, 3);
-            if(recvd < 1) return false;
+            if(echo(packet + 1, 3) < 3) return false;
             if(packet[1] == data_size){ 
-              if(packet[3] != 0x01 || packet[3] != 0x03) return false;
+              if(packet[3] != 0x01 && packet[3] != 0x03) return false;
 
-              //Serial.println("New GPS Packet");
-              echo(packet + 4, 12);
+              if(echo(packet + 4, 12) < 12) return false;
               
               // We have to read the checksum before writing to pos
-              echo(packet + 16, 4);
+              if(echo(packet + 16, 4) < 4) return false;
               uint32_t checksum = 
                       ( ((uint32_t) packet[16]) << 24) +
                       ( ((uint32_t) packet[17]) << 16) +
@@ -76,20 +74,25 @@ bool comms_recv(vec3 *pos) {
                       packet[19];
 
               if(crc32(packet + 3, 13) == checksum) {
-                float longitude, latitude, altitude;
+                if(packet[3] == 0x01) {
+                  float longitude, latitude;
+                  memcpy(&longitude, &packet[4], 4);
+                  memcpy(&latitude, &packet[8], 4);
+                  
+                  float bige_lon = BigEndianFloat(longitude);
+                  float bige_lat = BigEndianFloat(latitude);
+                  bige_lon *= PI/180;
+                  bige_lat *= PI/180;
 
-                memcpy(&longitude, &packet[4], 4);
-                memcpy(&latitude, &packet[8], 4);
-                //memcpy(&altitude, &packet[12], 4);
-
-                // Convert to radians
-                float bige_lon = BigEndianFloat(longitude) * PI/180;
-                float bige_lat = BigEndianFloat(latitude) * PI/180;
-                float bige_alt = BigEndianFloat(altitude);
-                
-                pos->x = bige_lon;
-                pos->y = bige_lat;
-                //pos->z = bige_alt;
+                  pos->x = bige_lon;
+                  pos->y = bige_lat;
+                } else if(packet[3] == 0x03) {
+                  float pressure;
+                  memcpy(&pressure, &packet[12], 4);
+                  float bige_pre = BigEndianFloat(pressure);
+                  pos->z = 44330 * (1- pow(bige_pre/101325, 1/5.255));
+                  //Serial.println(44330 * (1- pow(bige_pre/101325, 1/5.255)));
+                }
                 
                 return true;
               }
